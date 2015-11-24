@@ -136,7 +136,6 @@ void spaceship(double px, double py, double pz,	double dx, double dy, double dz,
 void glWindowPos2i(GLint  x,  GLint  y);
 void timer(int toggle);
 
-
 // initialization function
 void init(void)
 {
@@ -233,48 +232,28 @@ void spaceship(double px, double py, double pz,	double dx, double dy, double dz,
 
 static void Sky(double D)
 {
+ 
+        glMatrixMode(GL_PROJECTION);
+        glLoadIdentity();
+        glOrtho(0.0f, D, D, 0.0, 0.0, 1.f);
+        glDepthMask(GL_FALSE);
+        glMatrixMode(GL_MODELVIEW);
+        glLoadIdentity();
         glColor3f(1,1,1);
         glEnable(GL_TEXTURE_2D);
 
-        //  Sides
         glBindTexture(GL_TEXTURE_2D,sky[0]);
         glBegin(GL_QUADS);
-        glTexCoord2f(0.00,0); glVertex3f(-D,-D,-D);
-        glTexCoord2f(0.25,0); glVertex3f(+D,-D,-D);
-        glTexCoord2f(0.25,1); glVertex3f(+D,+D,-D);
-        glTexCoord2f(0.00,1); glVertex3f(-D,+D,-D);
-
-        glTexCoord2f(0.25,0); glVertex3f(+D,-D,-D);
-        glTexCoord2f(0.50,0); glVertex3f(+D,-D,+D);
-        glTexCoord2f(0.50,1); glVertex3f(+D,+D,+D);
-        glTexCoord2f(0.25,1); glVertex3f(+D,+D,-D);
-
-        glTexCoord2f(0.50,0); glVertex3f(+D,-D,+D);
-        glTexCoord2f(0.75,0); glVertex3f(-D,-D,+D);
-        glTexCoord2f(0.75,1); glVertex3f(-D,+D,+D);
-        glTexCoord2f(0.50,1); glVertex3f(+D,+D,+D);
-
-        glTexCoord2f(0.75,0); glVertex3f(-D,-D,+D);
-        glTexCoord2f(1.00,0); glVertex3f(-D,-D,-D);
-        glTexCoord2f(1.00,1); glVertex3f(-D,+D,-D);
-        glTexCoord2f(0.75,1); glVertex3f(-D,+D,+D);
-        glEnd();
-
-        //  Top and bottom
-        glBindTexture(GL_TEXTURE_2D,sky[1]);
-        glBegin(GL_QUADS);
-        glTexCoord2f(0.0,0); glVertex3f(+D,+D,-D);
-        glTexCoord2f(0.5,0); glVertex3f(+D,+D,+D);
-        glTexCoord2f(0.5,1); glVertex3f(-D,+D,+D);
-        glTexCoord2f(0.0,1); glVertex3f(-D,+D,-D);
-
-        glTexCoord2f(1.0,1); glVertex3f(-D,-D,+D);
-        glTexCoord2f(0.5,1); glVertex3f(+D,-D,+D);
-        glTexCoord2f(0.5,0); glVertex3f(+D,-D,-D);
-        glTexCoord2f(1.0,0); glVertex3f(-D,-D,-D);
+        glTexCoord2f(0.0,1); glVertex2f(0,0);
+        glTexCoord2f(1.0,1); glVertex2f(D,0);
+        glTexCoord2f(1.0,0); glVertex2f(D,D);
+        glTexCoord2f(0,0); glVertex2f(0,D);
         glEnd();
 
         glDisable(GL_TEXTURE_2D);
+        glDepthMask(GL_TRUE);
+        glMatrixMode(GL_PROJECTION);
+        glLoadIdentity();
 }
 
 
@@ -292,7 +271,6 @@ void display(void)
 
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); // Erase the window and the depth buffer 
 
-        glMatrixMode(GL_MODELVIEW);
 
 
 	width =  glutGet(GLUT_WINDOW_WIDTH);
@@ -303,10 +281,10 @@ void display(void)
         //  Erase the window and the depth buffer
         glClearColor(0,0.3,0.7,0);
 
-        glLoadIdentity();
-
 	Sky(3.5*dim); // draw space like looking texture
 
+        gluPerspective(45.0, (GLfloat) 1280 / (GLfloat) 720, 0.1, 1000.0);
+        glMatrixMode(GL_MODELVIEW);
         glLoadIdentity(); // Initialize the model matrix as identity
         gluLookAt(Ex,Ey,Ez , Ox,Oy,Oz , Ux,Uy,Uz);
 	
@@ -315,6 +293,7 @@ void display(void)
   	if(space)
 		spaceship(px, py, pz, -90+up, side, 180,0.5,0.5,0.5);
 
+        glLoadIdentity();
 	glTranslatef(fx,fy,fz);
 
 
@@ -451,79 +430,79 @@ static void Reverse(void* x,const int n)
 int LoadBitmap(char *filename)
 {
 	//printf("loadbitmap\n");
-        FILE * file;
-        char temp;
-        long i;
-         size_t size;
+    FILE * file;
+    char temp;
+    long i;
+	 size_t size;
 
-        BITMAPINFOHEADER infoheader;
+    BITMAPINFOHEADER infoheader;
 
-        num_texture++; // The counter of the current texture is increased
+    num_texture++; // The counter of the current texture is increased
 
-        if( (file = fopen(filename, "rb"))==NULL) return (-1); // Open the file for reading
+    if( (file = fopen(filename, "rb"))==NULL) return (-1); // Open the file for reading
 
-        fseek(file, 18, SEEK_CUR);  /* start reading width & height */
-        size = fread(&infoheader.biWidth, sizeof(int), 1, file);
+    fseek(file, 18, SEEK_CUR);  /* start reading width & height */
+    size = fread(&infoheader.biWidth, sizeof(int), 1, file);
 
-        size = fread(&infoheader.biHeight, sizeof(int), 1, file);
+    size = fread(&infoheader.biHeight, sizeof(int), 1, file);
 
-        size = fread(&infoheader.biPlanes, sizeof(short int), 1, file);
-        if (infoheader.biPlanes != 1) {
-            //printf("Planes from %s is not 1: %u\n", filename, infoheader.biPlanes);
-            return 0;
-        }
+    size = fread(&infoheader.biPlanes, sizeof(short int), 1, file);
+    if (infoheader.biPlanes != 1) {
+	    //printf("Planes from %s is not 1: %u\n", filename, infoheader.biPlanes);
+	    return 0;
+    }
 
-        // read the bpp
-        size = fread(&infoheader.biBitCount, sizeof(unsigned short int), 1, file);
-        if (infoheader.biBitCount != 24) {
-        // printf("Bpp from %s is not 24: %d\n", filename, infoheader.biBitCount);
-        return 0;
-        }
-
-
-        fseek(file, 24, SEEK_CUR);
-
-        // read the data.
-        infoheader.data = (char *) malloc(infoheader.biWidth * infoheader.biHeight * 3);
-        if (infoheader.data == NULL) {
-           // printf("Error allocating memory for color-corrected image data\n");
-            return 0;
-        }
-
-        if ((i = fread(infoheader.data, infoheader.biWidth * infoheader.biHeight * 3, 1, file)) != 1) {
-            //fprintf("Error reading image data from %s.\n", filename);
-            return 0;
-        }
-
-        for (i=0; i<(infoheader.biWidth * infoheader.biHeight * 3); i+=3) { // reverse all of the colors. (bgr -> rgb)
-            temp = infoheader.data[i];
-            infoheader.data[i] = infoheader.data[i+2];
-            infoheader.data[i+2] = temp;
-        }
+    // read the bpp
+    size = fread(&infoheader.biBitCount, sizeof(unsigned short int), 1, file);
+    if (infoheader.biBitCount != 24) {
+     // printf("Bpp from %s is not 24: %d\n", filename, infoheader.biBitCount);
+      return 0;
+    }
 
 
-        fclose(file); // Closes the file stream
+    fseek(file, 24, SEEK_CUR);
+
+    // read the data.
+    infoheader.data = (char *) malloc(infoheader.biWidth * infoheader.biHeight * 3);
+    if (infoheader.data == NULL) {
+	   // printf("Error allocating memory for color-corrected image data\n");
+	    return 0;
+    }
+
+    if ((i = fread(infoheader.data, infoheader.biWidth * infoheader.biHeight * 3, 1, file)) != 1) {
+	    //fprintf("Error reading image data from %s.\n", filename);
+	    return 0;
+    }
+
+    for (i=0; i<(infoheader.biWidth * infoheader.biHeight * 3); i+=3) { // reverse all of the colors. (bgr -> rgb)
+	    temp = infoheader.data[i];
+	    infoheader.data[i] = infoheader.data[i+2];
+	    infoheader.data[i+2] = temp;
+    }
 
 
-        glBindTexture(GL_TEXTURE_2D, num_texture); // Bind the ID texture specified by the 2nd parameter
+    fclose(file); // Closes the file stream
 
-        // The next commands sets the texture parameters
-        glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT); // If the u,v coordinates overflow the range 0,1 the image is repeated
-        glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-        glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR); // The magnification function ("linear" produces better results)
-        glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_NEAREST); //The minifying function
 
-        glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE); // We don't combine the color with the original surface color, use only the texture map.
+    glBindTexture(GL_TEXTURE_2D, num_texture); // Bind the ID texture specified by the 2nd parameter
 
-        // Finally we define the 2d texture
-        glTexImage2D(GL_TEXTURE_2D, 0, 3, infoheader.biWidth, infoheader.biHeight, 0, GL_RGB, GL_UNSIGNED_BYTE, infoheader.data);
+    // The next commands sets the texture parameters
+    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT); // If the u,v coordinates overflow the range 0,1 the image is repeated
+    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR); // The magnification function ("linear" produces better results)
+    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_NEAREST); //The minifying function
 
-        // And create 2d mipmaps for the minifying function
-        gluBuild2DMipmaps(GL_TEXTURE_2D, 3, infoheader.biWidth, infoheader.biHeight, GL_RGB, GL_UNSIGNED_BYTE, infoheader.data);
-        size = size + 1;
-        free(infoheader.data); // Free the memory we used to load the texture
+    glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE); // We don't combine the color with the original surface color, use only the texture map.
 
-        return (num_texture); // Returns the current texture OpenGL ID
+    // Finally we define the 2d texture
+    glTexImage2D(GL_TEXTURE_2D, 0, 3, infoheader.biWidth, infoheader.biHeight, 0, GL_RGB, GL_UNSIGNED_BYTE, infoheader.data);
+
+    // And create 2d mipmaps for the minifying function
+    gluBuild2DMipmaps(GL_TEXTURE_2D, 3, infoheader.biWidth, infoheader.biHeight, GL_RGB, GL_UNSIGNED_BYTE, infoheader.data);
+    size = size + 1;
+    free(infoheader.data); // Free the memory we used to load the texture
+
+    return (num_texture); // Returns the current texture OpenGL ID
 }
 
 
@@ -770,8 +749,6 @@ void timer(int toggle)
         glutPostRedisplay();
 }
 
-
-
 /**********************************************************
  *
  * The main routine
@@ -793,8 +770,7 @@ int main(int argc, char **argv)
         glutKeyboardFunc (keyboard);
         glutSpecialFunc (keyboard_s);
         timer(1);
-        sky[0] = LoadTexBMP("sky0.bmp");
-        sky[1] = LoadTexBMP("sky1.bmp");
+        sky[0] = LoadTexBMP("planetcropped_scaled_trans.bmp");
         ReadDEM(0.0,0.0,0.0);
         init();
 
